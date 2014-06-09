@@ -28,6 +28,9 @@ def euclidean_distance(a, b):
 	""" e_distance = math.sqrt((your.x - other.x) ** 2 + (your.y - other.y) ** 2) """
 	return math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2)
 
+def dot_product(a, b):
+	return sum([(a.rating[x] * b.rating[x]) for x in a.rating if x in b.rating])
+
 def compare_consumers(a, b, algo="e"):
 	""" find how similar two consumers tastes are, by using their ratings
 		to compute their 'distance' from one another. """
@@ -63,7 +66,6 @@ def nearestNeighbors(consumer, neighbors):
 	distances.sort()
 	return distances
 
-
 def recommend(username, users):
 	""" Give list of recommendations based on other users purchases. """
 	nearest = nearestNeighbors(username, users)[0][1]  # the object only
@@ -74,7 +76,6 @@ def recommend(username, users):
 			recommendations.append((item, nearest.rating[item]))
 	recommendations.sort()
 	return recommendations
-
 
 def minkowski(rating1, rating2, r):
 	""" Computes the Minkowski Distance. 
@@ -95,30 +96,43 @@ def minkowski(rating1, rating2, r):
 
 def pearson(a, b):
 	matches = 0
-	matches = sum([1 for key in a.rating if key in b.rating])
-	if matches == 0:
-		return "No matches."
-	# x * y for [x] for [y]
-	summ_a = sum([a.rating[key] * b.rating[key] for key in a.rating
-		if key in b.rating])
-	# sum[x]
-	summ_b_a = sum([a.rating[key] for key in a.rating])
-	# sum[y]
-	summ_b_b = sum([b.rating[key] for key in b.rating])
-	numerator = summ_a - (summ_b_a * summ_b_b / matches)
-	# x ** 2 for [x]
-	summ_c_a = sum([a.rating[key] ** 2 for key in a.rating])
-	# sum[x] ** 2
-	summ_d_a = summ_b_a ** 2
-	print(summ_c_a, summ_d_a, matches)
-	summ_e_a = math.sqrt(abs(summ_c_a - (summ_d_a / matches)))
-	# y ** 2 for [y]
-	summ_c_b = sum([b.rating[key] ** 2 for key in b.rating])
-	# sum[y] ** 2
-	summ_d_b = summ_b_b ** 2
-	summ_e_b = math.sqrt(abs(summ_c_b - (summ_d_b / matches)))
-	denominator = summ_e_a * summ_e_b
-	return numerator / denominator
+	summ_ab = 0
+	summ_a = 0
+	summ_b = 0
+	summ_a2 = 0
+	summ_b2 = 0
+	for key in a.rating:
+		if key in b.rating:
+			matches += 1
+			x = a.rating[key]
+			y = b.rating[key]
+			# x * y for [x] for [y]
+			summ_ab += x * y
+			# sum[x]
+			summ_a += x
+			# sum[y]
+			summ_b += y
+			# x ** 2 for [x]
+			summ_a2 += x ** 2
+			# y ** 2 for [y]
+			summ_b2 += y ** 2
+
+	denominator = math.sqrt(
+		summ_a2 - (summ_a ** 2) / matches) * math.sqrt(
+		summ_b2 - (summ_b ** 2) / matches)
+	if denominator == 0:
+		return denominator
+	else:
+		return (summ_ab - (summ_a * summ_b) / matches) / denominator
+
+
+def similarity(a, b):
+	""" cosine similarity
+
+	range from 1(perfect similarity) to -1(perfect negative similarity)"""
+	return dot_product(a, b) / (
+		sum([a.rating[x] ** 2 for x in a.rating if x in b.rating]) * sum(
+			[b.rating[x] ** 2 for x in b.rating if x in a.rating]))
 
 
 if __name__ == "__main__":
@@ -207,4 +221,10 @@ if __name__ == "__main__":
 	print("Angelica's results:\n{}".format(recommend(Angelica, users)))
 	print("Bill's results:\n{}".format(recommend(Bill, users)))
 
-	print("Pearson Test: {}".format(pearson(Hailey, Sam)))
+	print("Pearson Test: {}".format(pearson(Angelica, Bill)))
+	print("Pearson Test: {}".format(pearson(Angelica, Hailey)))
+	print("Pearson Test: {}".format(pearson(Angelica, Jordyn)))
+
+	print("Similarity: {}".format(similarity(Angelica, Bill)))
+	print("Similarity: {}".format(similarity(Angelica, Hailey)))
+	print("Similarity: {}".format(similarity(Angelica, Jordyn)))
