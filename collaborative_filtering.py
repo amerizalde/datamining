@@ -15,6 +15,7 @@ class Consumer(object):
 	def __init__(self, name):
 		self.name = name
 		self.rating = {}
+		self.max_rating = 0
 
 	def rate_product(self, item, rating):
 		self.rating[item] = rating
@@ -26,23 +27,6 @@ def manhattan_distance(a, b):
 def euclidean_distance(a, b):
 	""" e_distance = math.sqrt((your.x - other.x) ** 2 + (your.y - other.y) ** 2) """
 	return math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2)
-
-def minkowski(rating1, rating2, r):
-	""" Computes the Minkowski Distance. 
-	Both rating1 and rating2 are dicts of the form
-	{"Item Name": rating, "Item Name": rating}
-	"""
-	distance = 0
-	for key in rating1:
-		if key not in rating2:
-			continue
-		else:
-			distance += pow(abs(rating1[key] - rating2[key]), r)
-	# was there a common rating?
-	if distance != 0:
-		return pow(distance, 1/r)
-	else:
-		return distance
 
 def compare_consumers(a, b, algo="e"):
 	""" find how similar two consumers tastes are, by using their ratings
@@ -90,6 +74,51 @@ def recommend(username, users):
 			recommendations.append((item, nearest.rating[item]))
 	recommendations.sort()
 	return recommendations
+
+
+def minkowski(rating1, rating2, r):
+	""" Computes the Minkowski Distance. 
+	Both rating1 and rating2 are dicts of the form
+	{"Item Name": {"rating": rating, "coeff": coeff}}
+	"""
+	distance = 0
+	for key in rating1:
+		if key not in rating2:
+			continue
+		else:
+			distance += pow(abs(rating1[key] - rating2[key]), r)
+	# was there a common rating?
+	if distance != 0:
+		return pow(distance, 1/r)
+	else:
+		return distance
+
+def pearson(a, b):
+	matches = 0
+	matches = sum([1 for key in a.rating if key in b.rating])
+	if matches == 0:
+		return "No matches."
+	# x * y for [x] for [y]
+	summ_a = sum([a.rating[key] * b.rating[key] for key in a.rating
+		if key in b.rating])
+	# sum[x]
+	summ_b_a = sum([a.rating[key] for key in a.rating])
+	# sum[y]
+	summ_b_b = sum([b.rating[key] for key in b.rating])
+	numerator = summ_a - (summ_b_a * summ_b_b / matches)
+	# x ** 2 for [x]
+	summ_c_a = sum([a.rating[key] ** 2 for key in a.rating])
+	# sum[x] ** 2
+	summ_d_a = summ_b_a ** 2
+	print(summ_c_a, summ_d_a, matches)
+	summ_e_a = math.sqrt(abs(summ_c_a - (summ_d_a / matches)))
+	# y ** 2 for [y]
+	summ_c_b = sum([b.rating[key] ** 2 for key in b.rating])
+	# sum[y] ** 2
+	summ_d_b = summ_b_b ** 2
+	summ_e_b = math.sqrt(abs(summ_c_b - (summ_d_b / matches)))
+	denominator = summ_e_a * summ_e_b
+	return numerator / denominator
 
 
 if __name__ == "__main__":
@@ -172,8 +201,10 @@ if __name__ == "__main__":
 
 	users = (Hailey, Veronica, Jordyn)
 
-	print("Hailey's results:\n", recommend(Hailey, users))
-	print("Veronica's results:\n", recommend(Veronica, users))
-	print("Jordyn's results:\n", recommend(Jordyn, users))
-	print("Angelica's results:\n", recommend(Angelica, users))
-	print("Bill's results:\n", recommend(Bill, users))
+	print("Hailey's results:\n{}".format(recommend(Hailey, users)))
+	print("Veronica's results:\n{}".format(recommend(Veronica, users)))
+	print("Jordyn's results:\n{}".format(recommend(Jordyn, users)))
+	print("Angelica's results:\n{}".format(recommend(Angelica, users)))
+	print("Bill's results:\n{}".format(recommend(Bill, users)))
+
+	print("Pearson Test: {}".format(pearson(Hailey, Sam)))
