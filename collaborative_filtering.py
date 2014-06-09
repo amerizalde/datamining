@@ -27,6 +27,23 @@ def euclidean_distance(a, b):
 	""" e_distance = math.sqrt((your.x - other.x) ** 2 + (your.y - other.y) ** 2) """
 	return math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2)
 
+def minkowski(rating1, rating2, r):
+	""" Computes the Minkowski Distance. 
+	Both rating1 and rating2 are dicts of the form
+	{"Item Name": rating, "Item Name": rating}
+	"""
+	distance = 0
+	for key in rating1:
+		if key not in rating2:
+			continue
+		else:
+			distance += pow(abs(rating1[key] - rating2[key]), r)
+	# was there a common rating?
+	if distance != 0:
+		return pow(distance, 1/r)
+	else:
+		return distance
+
 def compare_consumers(a, b, algo="e"):
 	""" find how similar two consumers tastes are, by using their ratings
 		to compute their 'distance' from one another. """
@@ -56,7 +73,8 @@ def nearestNeighbors(consumer, neighbors):
 		if user == consumer:
 			continue
 		else:
-			distance = compare_consumers(consumer, user)
+			# distance = compare_consumers(consumer, user)
+			distance = minkowski(consumer.rating, user.rating, 2)
 			distances.append((distance, user))
 	distances.sort()
 	return distances
