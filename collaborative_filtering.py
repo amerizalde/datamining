@@ -54,7 +54,7 @@ def compare_consumers(a, b, algo="e"):
 def minkowski(rating1, rating2, r=2):
 	""" Computes the Minkowski Distance. 
 	Both rating1 and rating2 are dicts of the form
-	{"Item Name": {"rating": rating, "coeff": coeff}}
+	{"Item Name": rating}
 	"""
 	distance = 0
 	for key in rating1:
@@ -148,7 +148,7 @@ def recommend(username, users, func="MINKOSWI"):
 def recommender(consumer, users, func, k):
 	""" implement recommend() with (K)Nearest Neighbors."""
 	if func in ("MINKOSWI", "PEARSON", "COSINE"):
-		# 1:: get a list of users ordered by function()
+		# get a list of users ordered by function()
 		nearest = nearestNeighbors(consumer, users, func)
 	else:
 		return """Error: options for func := MINKOSWI, PEARSON, COSINE"""
@@ -262,10 +262,10 @@ if __name__ == "__main__":
 	users = (Hailey, Veronica, Jordyn, Angelica, Bill, Chan, Dan, Sam)
 
 	print("** Hailey's results:\n\n{}\n".format(recommend(Hailey, users)))
-	print("** Veronica's results:\n\n{}\n".format(recommend(Veronica, users, "PEARSON")))
-	print("** Jordyn's results:\n\n{}\n".format(recommend(Jordyn, users, "COSINE")))
+	print("** Veronica's results:\n\n{}\n".format(recommend(Veronica, users)))
+	print("** Jordyn's results:\n\n{}\n".format(recommend(Jordyn, users)))
 	print("** Angelica's results:\n\n{}\n".format(recommend(Angelica, users)))
-	print("** Bill's results:\n\n{}\n".format(recommend(Bill, users, "PEARSON")))
+	print("** Bill's results:\n\n{}\n".format(recommend(Bill, users)))
 
 	print("Pearson Test :: Angelica, Bill: 	{}".format(
 		pearson(Angelica.rating, Bill.rating)))
