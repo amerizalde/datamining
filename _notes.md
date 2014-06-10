@@ -93,3 +93,7 @@ When comparing data sets of sparse data, handling all the shared zeros becomes a
         X = math.sqrt(sum([a.rating[x] ** 2 for x in a.rating if x in b.rating]))
         Y = math.sqrt(sum([b.rating[x] ** 2 for x in b.rating if x in a.rating]))
         return dot_product(a, b) / (X * Y)
+
+- If the data is subject to grade-inflation (different user may be using different scales), use Pearson.
+- If the data is dense (almost all attributes have non-zero values) and the magnitude of the attribute values is important, use Minkowski.
+- If the data is sparse, consider using Cosine Similarity.

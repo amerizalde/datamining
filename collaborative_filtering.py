@@ -50,31 +50,7 @@ def compare_consumers(a, b, algo="e"):
 		tracker = sum([((match[0] - match[1]) ** 2) for match in matches])
 		return math.sqrt(tracker)
 
-def nearestNeighbors(consumer, neighbors):
-	""" return a list of neighbors sorted by distance. """
-	distances = []
-	for user in neighbors:
-		if user == consumer:
-			continue
-		else:
-			# distance = compare_consumers(consumer, user)
-			distance = minkowski(consumer.rating, user.rating, 2)
-			distances.append((distance, user))
-	distances.sort()
-	return distances
-
-def recommend(username, users):
-	""" Give list of recommendations based on other users purchases. """
-	nearest = nearestNeighbors(username, users)[0][1]  # the object only
-	recommendations = []
-	# we are only recommending items the consumer has not already purchased.
-	for item in nearest.rating.keys():
-		if item not in username.rating.keys():
-			recommendations.append((item, nearest.rating[item]))
-	recommendations.sort()
-	return recommendations
-
-def minkowski(rating1, rating2, r):
+def minkowski(rating1, rating2, r=2):
 	""" Computes the Minkowski Distance. 
 	Both rating1 and rating2 are dicts of the form
 	{"Item Name": {"rating": rating, "coeff": coeff}}
@@ -91,18 +67,18 @@ def minkowski(rating1, rating2, r):
 	else:
 		return distance
 
-def pearson(a, b):
+def pearson(a_rating, b_rating):
 	matches = 0
 	summ_ab = 0
 	summ_a = 0
 	summ_b = 0
 	summ_a2 = 0
 	summ_b2 = 0
-	for key in a.rating:
-		if key in b.rating:
+	for key in a_rating:
+		if key in b_rating:
 			matches += 1
-			x = a.rating[key]
-			y = b.rating[key]
+			x = a_rating[key]
+			y = b_rating[key]
 			# x * y for [x] for [y]
 			summ_ab += x * y
 			# sum[x]
@@ -123,17 +99,50 @@ def pearson(a, b):
 		return (summ_ab - (summ_a * summ_b) / matches) / denominator
 
 def dot_product(a, b):
-	return sum([(a.rating[x] * b.rating[x]) for x in a.rating if x in b.rating])
+	return sum([(a[x] * b[x]) for x in a if x in b])
 
 def similarity(a, b):
 	""" cosine similarity
 
 	range from 1(perfect similarity) to -1(perfect negative similarity)"""
 	# find the length of vectors (a.ratings) and (b.ratings)
-	X = math.sqrt(sum([a.rating[x] ** 2 for x in a.rating if x in b.rating]))
-	Y = math.sqrt(sum([b.rating[x] ** 2 for x in b.rating if x in a.rating]))
+	X = math.sqrt(sum([a[x] ** 2 for x in a if x in b]))
+	Y = math.sqrt(sum([b[x] ** 2 for x in b if x in a]))
 	return dot_product(a, b) / (X * Y)
 
+def nearestNeighbors(consumer, neighbors, func):
+	""" return a list of neighbors sorted by distance. """
+	distances = []
+	for user in neighbors:
+		if user == consumer:
+			continue
+		else:
+			algorithms = {
+				"MINKOSWI": minkowski,
+				"PEARSON": pearson,
+				"COSINE": similarity,
+				}
+			distance = algorithms[func](consumer.rating, user.rating)
+			distances.append((distance, user))
+	distances.sort()
+	return distances
+
+def recommend(username, users, func="MINKOSWI"):
+	""" Give list of recommendations based on other users purchases.
+		
+		options for func := "MINKOSWI", "PEARSON", "COSINE"
+	"""
+	if func in ("MINKOSWI", "PEARSON", "COSINE"):
+		nearest = nearestNeighbors(username, users, func)[0][1]  # the object only
+	else:
+		return """Error: options for func := MINKOSWI, PEARSON, COSINE"""
+	recommendations = []
+	# we are only recommending items the consumer has not already purchased.
+	for item in nearest.rating.keys():
+		if item not in username.rating.keys():
+			recommendations.append((item, nearest.rating[item]))
+	recommendations.sort()
+	return recommendations
 
 if __name__ == "__main__":
 	Hailey = Consumer("Hailey")
@@ -216,15 +225,21 @@ if __name__ == "__main__":
 	users = (Hailey, Veronica, Jordyn, Angelica, Bill, Chan, Dan, Sam)
 
 	print("** Hailey's results:\n\n{}\n".format(recommend(Hailey, users)))
-	print("** Veronica's results:\n\n{}\n".format(recommend(Veronica, users)))
-	print("** Jordyn's results:\n\n{}\n".format(recommend(Jordyn, users)))
+	print("** Veronica's results:\n\n{}\n".format(recommend(Veronica, users, "PEARSON")))
+	print("** Jordyn's results:\n\n{}\n".format(recommend(Jordyn, users, "COSINE")))
 	print("** Angelica's results:\n\n{}\n".format(recommend(Angelica, users)))
-	print("** Bill's results:\n\n{}\n".format(recommend(Bill, users)))
+	print("** Bill's results:\n\n{}\n".format(recommend(Bill, users, "PEARSON")))
 
-	print("Pearson Test :: Angelica, Bill: 	{}".format(pearson(Angelica, Bill)))
-	print("Pearson Test :: Angelica, Hailey: 	{}".format(pearson(Angelica, Hailey)))
-	print("Pearson Test :: Angelica, Jordyn: 	{}".format(pearson(Angelica, Jordyn)))
+	print("Pearson Test :: Angelica, Bill: 	{}".format(
+		pearson(Angelica.rating, Bill.rating)))
+	print("Pearson Test :: Angelica, Hailey: 	{}".format(
+		pearson(Angelica.rating, Hailey.rating)))
+	print("Pearson Test :: Angelica, Jordyn: 	{}".format(
+		pearson(Angelica.rating, Jordyn.rating)))
 
-	print("Similarity of Angelica to Veronica: 	{}".format(similarity(Angelica, Veronica)))
-	print("Similarity of Angelica to Hailey: 	{}".format(similarity(Angelica, Hailey)))
-	print("Similarity of Angelica to Jordyn: 	{}".format(similarity(Angelica, Jordyn)))
+	print("Similarity of Angelica to Veronica: 	{}".format(
+		similarity(Angelica.rating, Veronica.rating)))
+	print("Similarity of Angelica to Hailey: 	{}".format(
+		similarity(Angelica.rating, Hailey.rating)))
+	print("Similarity of Angelica to Jordyn: 	{}".format(
+		similarity(Angelica.rating, Jordyn.rating)))
