@@ -28,9 +28,6 @@ def euclidean_distance(a, b):
 	""" e_distance = math.sqrt((your.x - other.x) ** 2 + (your.y - other.y) ** 2) """
 	return math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2)
 
-def dot_product(a, b):
-	return sum([(a.rating[x] * b.rating[x]) for x in a.rating if x in b.rating])
-
 def compare_consumers(a, b, algo="e"):
 	""" find how similar two consumers tastes are, by using their ratings
 		to compute their 'distance' from one another. """
@@ -125,14 +122,17 @@ def pearson(a, b):
 	else:
 		return (summ_ab - (summ_a * summ_b) / matches) / denominator
 
+def dot_product(a, b):
+	return sum([(a.rating[x] * b.rating[x]) for x in a.rating if x in b.rating])
 
 def similarity(a, b):
 	""" cosine similarity
 
 	range from 1(perfect similarity) to -1(perfect negative similarity)"""
-	return dot_product(a, b) / (
-		sum([a.rating[x] ** 2 for x in a.rating if x in b.rating]) * sum(
-			[b.rating[x] ** 2 for x in b.rating if x in a.rating]))
+	# find the length of vectors (a.ratings) and (b.ratings)
+	X = math.sqrt(sum([a.rating[x] ** 2 for x in a.rating if x in b.rating]))
+	Y = math.sqrt(sum([b.rating[x] ** 2 for x in b.rating if x in a.rating]))
+	return dot_product(a, b) / (X * Y)
 
 
 if __name__ == "__main__":
@@ -213,18 +213,18 @@ if __name__ == "__main__":
 	Sam.rate_product(slightly_stoopid, 4)
 	Sam.rate_product(the_strokes, 5)
 
-	users = (Hailey, Veronica, Jordyn)
+	users = (Hailey, Veronica, Jordyn, Angelica, Bill, Chan, Dan, Sam)
 
-	print("Hailey's results:\n{}".format(recommend(Hailey, users)))
-	print("Veronica's results:\n{}".format(recommend(Veronica, users)))
-	print("Jordyn's results:\n{}".format(recommend(Jordyn, users)))
-	print("Angelica's results:\n{}".format(recommend(Angelica, users)))
-	print("Bill's results:\n{}".format(recommend(Bill, users)))
+	print("** Hailey's results:\n\n{}\n".format(recommend(Hailey, users)))
+	print("** Veronica's results:\n\n{}\n".format(recommend(Veronica, users)))
+	print("** Jordyn's results:\n\n{}\n".format(recommend(Jordyn, users)))
+	print("** Angelica's results:\n\n{}\n".format(recommend(Angelica, users)))
+	print("** Bill's results:\n\n{}\n".format(recommend(Bill, users)))
 
-	print("Pearson Test: {}".format(pearson(Angelica, Bill)))
-	print("Pearson Test: {}".format(pearson(Angelica, Hailey)))
-	print("Pearson Test: {}".format(pearson(Angelica, Jordyn)))
+	print("Pearson Test :: Angelica, Bill: 	{}".format(pearson(Angelica, Bill)))
+	print("Pearson Test :: Angelica, Hailey: 	{}".format(pearson(Angelica, Hailey)))
+	print("Pearson Test :: Angelica, Jordyn: 	{}".format(pearson(Angelica, Jordyn)))
 
-	print("Similarity: {}".format(similarity(Angelica, Bill)))
-	print("Similarity: {}".format(similarity(Angelica, Hailey)))
-	print("Similarity: {}".format(similarity(Angelica, Jordyn)))
+	print("Similarity of Angelica to Veronica: 	{}".format(similarity(Angelica, Veronica)))
+	print("Similarity of Angelica to Hailey: 	{}".format(similarity(Angelica, Hailey)))
+	print("Similarity of Angelica to Jordyn: 	{}".format(similarity(Angelica, Jordyn)))
