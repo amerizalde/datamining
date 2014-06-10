@@ -12,10 +12,11 @@ class Consumer(object):
 					of the product. 
 	"""
 
-	def __init__(self, name):
+	def __init__(self, name, **kwargs):
 		self.name = name
 		self.rating = {}
-		self.max_rating = 0
+		# how many results to show the user
+		self.recommendations = kwargs.get("recommendations", 5)
 
 	def rate_product(self, item, rating):
 		self.rating[item] = rating
@@ -144,6 +145,42 @@ def recommend(username, users, func="MINKOSWI"):
 	recommendations.sort()
 	return recommendations
 
+def recommender(consumer, users, func, k):
+	""" implement recommend() with (K)Nearest Neighbors."""
+	if func in ("MINKOSWI", "PEARSON", "COSINE"):
+		# 1:: get a list of users ordered by function()
+		nearest = nearestNeighbors(consumer, users, func)
+	else:
+		return """Error: options for func := MINKOSWI, PEARSON, COSINE"""
+	nearest.sort(reverse=True)
+	recommendations = {}
+	consumer_ratings = consumer.rating
+	totalDistance = 0.
+	for i in range(k):
+		totalDistance += nearest[i][0]
+	for i in range(k):
+		# lookup once
+		user_weight = nearest[i][0] / totalDistance
+		user_ratings = nearest[i][1].rating
+		# iterate through this user's rates purchases...
+		for artist in user_ratings:
+			if not artist in consumer_ratings:
+				# if its not already recommended, add it
+				if artist not in recommendations:
+					recommendations[artist] = (
+						user_ratings[artist] * user_weight)
+				# otherwise, update the rating
+				else:
+					recommendations[artist] = (
+						recommendations[artist]
+						+ user_ratings[artist] * user_weight)
+	# morph data into a sortable sequence
+	recommendations = [(value, key) for key, value in recommendations.items()]
+	recommendations.sort()
+	# return only the number of recommendations the consumer wants.
+	return recommendations[:consumer.recommendations]
+
+
 if __name__ == "__main__":
 	Hailey = Consumer("Hailey")
 	Veronica = Consumer("Veronica")
@@ -243,3 +280,9 @@ if __name__ == "__main__":
 		similarity(Angelica.rating, Hailey.rating)))
 	print("Similarity of Angelica to Jordyn: 	{}".format(
 		similarity(Angelica.rating, Jordyn.rating)))
+	print("\n")
+	print("** Hailey's results:\n\n{}\n".format(recommender(Hailey, users, "PEARSON", 3)))
+	print("** Veronica's results:\n\n{}\n".format(recommender(Veronica, users, "PEARSON", 4)))
+	print("** Jordyn's results:\n\n{}\n".format(recommender(Jordyn, users, "COSINE", 3)))
+	print("** Angelica's results:\n\n{}\n".format(recommender(Angelica, users, "MINKOSWI", 5)))
+	print("** Bill's results:\n\n{}\n".format(recommender(Bill, users, "PEARSON", 5)))
