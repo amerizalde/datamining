@@ -18,3 +18,11 @@ class Consumer(object):
 
     def rate_product(self, item, rating):
         self.rating[item] = rating
+
+    def get_avg_rating(self):
+        all_ratings = [v for k, v in self.rating.items()]
+        denom = len(all_ratings)
+        if denom == 0:
+            return denom
+        else:
+            return all_ratings / denom

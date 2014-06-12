@@ -94,6 +94,15 @@ def similarity(a, b):
     Y = math.sqrt(sum([b[x] ** 2 for x in b if x in a]))
     return dot_product(a, b) / (X * Y) if 0 not in (X, Y) else 0
 
+def item_similarity(a, b, avg_rating):
+    """ a and b are item ratings.
+
+        avg_rating is the user's avg rating for all items
+    """
+    num_i = a - avg_rating
+    num_j = b - avg_rating
+    return ((num_i * num_j) / (math.sqrt(num_i ** 2) * math.sqrt(num_j ** 2)))
+
 def nearestNeighbors(consumer, neighbors, func):
     """ return a list of neighbors sorted by distance. """
     distances = []
@@ -159,7 +168,7 @@ def recommender(consumer, users, func, k):
                 else:
                     recommendations[artist] = (
                         recommendations[artist]
-                        + user_ratings[artist] * user_weight)
+                        + (user_ratings[artist] * user_weight))
     # morph data into a sortable sequence
     recommendations = [(value, key) for key, value in recommendations.items()]
     recommendations.sort()
