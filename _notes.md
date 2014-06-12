@@ -2,13 +2,13 @@
 
 - collaborative filtering
 
-The goal is to recommend you the buyer an item to purchase. You want to buy a book. The system looks for other customers that are similar to you and shows you what they have purchased.
+The goal is to recommend you the buyer an item to purchase. While shopping the system looks for other customers that are similar to you and shows you what they have purchased.
 
-- How does the system find someone similar?
+#### Manhattan and Euclidean Distance
 
 If you previously bought ANYTHING ELSE from the system, and RATED it, the system will search all other customers who rated the item you bought, and pull up any books they bought.
 
-It will compute the Manhattan distance of your previous rating to all other customers who rated that object, and find the one closest to you.
+It will compute the relative distance of your previous rating to all other customers who rated that object, and find the one closest to you.
 
 Those customers book purchases that are rated highly will now be recommended to you.
 
@@ -97,3 +97,46 @@ When comparing data sets of sparse data, handling all the shared zeros becomes a
 - If the data is subject to grade-inflation (different user may be using different scales), use Pearson.
 - If the data is dense (almost all attributes have non-zero values) and the magnitude of the attribute values is important, use Minkowski.
 - If the data is sparse, consider using Cosine Similarity.
+
+#### K-Nearest Neighbor
+
+When finding similar users to the consumer, there is a probability that highly recommended users will have oddities in their ratings. Perhaps they rated something highly for a reason other than because they enjoyed it. How do you damper their influence in a way that doesn't affect their other valid ratings?
+
+K = the top list, i.e. k=3 means only the 3 most similar users will be sampled.
+Those K users' Pearson rating to the consumer will be used to calculate their influence on the consumer's recommendations. That weighted influence will be applied to their individual ratings, and then the top rated items will be recommended to the user.
+
+    def recommender(consumer, users, func, k):
+        """ implement recommend() with (K)Nearest Neighbors."""
+        if func in ("MINKOSWI", "PEARSON", "COSINE"):
+            # get a list of users ordered by function()
+            nearest = nearestNeighbors(consumer, users, func)
+        else:
+            return """Error: options for func := MINKOSWI, PEARSON, COSINE"""
+        nearest.sort(reverse=True)
+        recommendations = {}
+        consumer_ratings = consumer.rating
+        totalDistance = 0.
+        for i in range(k):
+            totalDistance += nearest[i][0]
+        for i in range(k):
+            # lookup once
+            user_weight = nearest[i][0] / totalDistance
+            user_ratings = nearest[i][1].rating
+            # iterate through this user's rates purchases...
+            for artist in user_ratings:
+                if not artist in consumer_ratings:
+                    # if its not already recommended, add it
+                    if artist not in recommendations:
+                        recommendations[artist] = (
+                            user_ratings[artist] * user_weight)
+                    # otherwise, update the rating
+                    else:
+                        recommendations[artist] = (
+                            recommendations[artist]
+                            + user_ratings[artist] * user_weight)
+        # morph data into a sortable sequence
+        recommendations = [(value, key) for key, value in recommendations.items()]
+        recommendations.sort()
+        # return only the number of recommendations the consumer wants.
+        return recommendations[:consumer.recommendations]
+
